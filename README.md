@@ -1,5 +1,5 @@
 # Book Review API
-> 🔗 **Looking for the Frontend?** This is the backend API. For the React user interface, please refer to the [Client Application](https://github.com/bekker-vladimir/book-review-client/tree/main).
+> 🔗 **Looking for the Frontend?** This is the backend API. For the React user interface, please refer to the [Client Application](https://github.com/bekker-vladimir/book-review-client).
 
 A robust backend service for a Book Review application, built with Java  Spring Boot. It provides a comprehensive RESTful API for managing books, reviews, users, and authentication.
 
