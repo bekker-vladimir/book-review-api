@@ -1,0 +1,75 @@
+services:
+  db:
+    image: postgres:16
+    container_name: bookreview-db
+    environment:
+      POSTGRES_DB: BookReviewDB
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5433:5432"
+    networks:
+      - bookreview-net
+    volumes:
+      - bookreview-db-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:latest
+    container_name: my-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - bookreview-net
+
+  redis-insight:
+    image: redis/redisinsight:latest
+    container_name: my-redisinsight
+    ports:
+      - "5540:5540"
+    networks:
+      - bookreview-net
+    volumes:
+      - redis-insight-data:/db
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: my-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - bookreview-net
+
+  app:
+    build: .
+    container_name: bookreview-app
+    depends_on:
+      - db
+      - redis
+      - rabbitmq
+    restart: on-failure
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/BookReviewDB
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+    ports:
+      - "8080:8080"
+    networks:
+      - bookreview-net
+
+volumes:
+  bookreview-db-data:
+  redis-insight-data:
+
+networks:
+  bookreview-net:
+    driver: bridge

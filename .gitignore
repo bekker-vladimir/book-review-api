@@ -1,0 +1,19 @@
+# maven
+/target/
+*.jar
+*.war
+
+# IDEs and editors
+/.idea/
+*.iml
+*.iws
+
+# user uploads
+/uploads/
+/test_uploads/
+
+# misc
+.DS_Store
+Thumbs.db
+.env
+.env.local
