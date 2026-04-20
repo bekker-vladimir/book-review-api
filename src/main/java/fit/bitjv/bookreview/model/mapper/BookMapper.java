@@ -27,6 +27,8 @@ public class BookMapper {
                 bookEntity.getGenre(),
                 bookEntity.getDescription(),
                 bookEntity.getPublicationDate(),
+                bookEntity.getAvgRating(),
+                bookEntity.getReviewCount(),
                 bookEntity.getStatus(),
                 coverUrl,
                 bookEntity.getAuthors().stream()

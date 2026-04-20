@@ -13,6 +13,8 @@ public class ReviewMapper {
                 reviewEntity.getId(),
                 reviewEntity.getRating(),
                 reviewEntity.getComment(),
+                reviewEntity.getBook().getId(),
+                reviewEntity.getBook().getTitle(),
                 reviewEntity.getUser().getUsername(),
                 reviewEntity.getCreatedAt() != null ?
                         reviewEntity.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd, HH:mm"))

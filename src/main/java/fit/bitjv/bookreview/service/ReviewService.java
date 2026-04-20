@@ -17,6 +17,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class ReviewService {
     private final ReviewRepository reviewRepository;
@@ -52,12 +54,22 @@ public class ReviewService {
                 .build();
 
         Review saved = reviewRepository.save(review);
+
+        reviewRepository.recalculateBookStats(bookId);
+
         return reviewMapper.toDto(saved);
     }
 
     public Page<ReviewResponseDto> getReviewsByBook(Long bookId, Pageable pageable) {
         return reviewRepository.findByBookId(bookId, pageable)
                 .map(reviewMapper::toDto);
+    }
+
+    public List<ReviewResponseDto> getRecent(int count) {
+        return reviewRepository.getRecent(count)
+                .stream()
+                .map(reviewMapper::toDto)
+                .toList();
     }
 
     @Transactional

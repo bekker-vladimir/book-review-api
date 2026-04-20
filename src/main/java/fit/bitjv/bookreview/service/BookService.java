@@ -15,6 +15,9 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -27,13 +30,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 
 @Service
 public class BookService {
@@ -48,6 +47,7 @@ public class BookService {
         this.authorRepository = authorRepository;
         this.bookMapper = bookMapper;
         this.coverStorageLocation = Paths.get(uploadDir).toAbsolutePath().normalize();
+
         try {
             Files.createDirectories(this.coverStorageLocation);
         } catch (Exception ex) {
@@ -91,26 +91,62 @@ public class BookService {
 
     @Cacheable(value = "books", key = "#id")
     public BookResponseDto getById(Long id) {
-        return bookRepository.findById(id)
+        return bookRepository.findByIdWithAuthors(id)
                 .map(bookMapper::toDto)
                 .orElseThrow(() -> new ResourceNotFoundException("Book", "id", id));
     }
 
-    public List<BookResponseDto> getAll() {
-        return bookRepository.findAllWithAuthorsByStatus(BookStatus.APPROVED)
-                .stream()
+    /**
+     * Two-step pagination - fixes the HHH90003004 (in-memory pagination) issue:
+     * Step 1: Fetch a page of IDs without JOINs (allows true SQL LIMIT/OFFSET).
+     * Step 2: Fetch full entities by those IDs in a single query using JOIN FETCH.
+     */
+    @Transactional
+    public Page<BookResponseDto> getAllPaged(Pageable pageable) {
+        Page<Long> idPage = bookRepository.findIdsByStatus(BookStatus.APPROVED, pageable);
+        return buildPageFromIds(idPage, pageable);
+    }
+
+    public List<BookResponseDto> getTopRated(int count) {
+        List<Long> ids = bookRepository.findTopRatedIds(count);
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        return fetchAndOrderByIds(ids);
+    }
+
+    @Transactional
+    public Page<BookResponseDto> searchBooksPaged(String query, Pageable pageable) {
+        Page<Long> idPage = bookRepository.findIdsByTitleOrAuthorAndStatus(query, BookStatus.APPROVED, pageable);
+        return buildPageFromIds(idPage, pageable);
+    }
+
+    /**
+     * Helper method: Constructs a Page of DTOs from a Page of IDs.
+     * Handles empty results and delegates entity fetching and ordering.
+     */
+    private Page<BookResponseDto> buildPageFromIds(Page<Long> idPage, Pageable pageable) {
+        List<Long> ids = idPage.getContent();
+        if (ids.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        List<BookResponseDto> dtos = fetchAndOrderByIds(ids);
+        return new PageImpl<>(dtos, pageable, idPage.getTotalElements());
+    }
+
+    /**
+     * Helper method: Fetches books by IDs with authors and restores
+     * the original sorting order (matching the paginated ID query).
+     */
+    private List<BookResponseDto> fetchAndOrderByIds(List<Long> orderedIds) {
+        List<Book> books = bookRepository.findAllWithAuthorsByIds(orderedIds);
+        Map<Long, Book> bookMap = books.stream()
+                .collect(Collectors.toMap(Book::getId, Function.identity()));
+        return orderedIds.stream()
+                .map(bookMap::get)
+                .filter(Objects::nonNull)
                 .map(bookMapper::toDto)
                 .toList();
-    }
-
-    public Page<BookResponseDto> getAllPaged(Pageable pageable) {
-        return bookRepository.findAllWithAuthorsByStatus(BookStatus.APPROVED, pageable)
-                .map(bookMapper::toDto);
-    }
-
-    public Page<BookResponseDto> searchBooksPaged(String query, Pageable pageable) {
-        return bookRepository.searchByTitleOrAuthorAndStatus(query, BookStatus.APPROVED, pageable)
-                .map(bookMapper::toDto);
     }
 
     public List<BookResponseDto> getAllByStatus(BookStatus status) {
@@ -126,13 +162,6 @@ public class BookService {
             throw new ResourceNotFoundException("Book", "id", id);
         }
         bookRepository.deleteById(id);
-    }
-
-    public List<BookResponseDto> searchBooks(String query) {
-        return bookRepository.searchByTitleOrAuthorAndStatus(query, BookStatus.APPROVED)
-                .stream()
-                .map(bookMapper::toDto)
-                .toList();
     }
 
     @Transactional
@@ -152,18 +181,24 @@ public class BookService {
         }
         Book book = bookRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Book", "id", id));
+
         try {
             String originalFilename = file.getOriginalFilename();
+
             String fileExtension = "";
             if (originalFilename != null && originalFilename.contains(".")) {
                 fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
             }
+
             String filename = UUID.randomUUID() + fileExtension;
+
             Path targetLocation = this.coverStorageLocation.resolve(filename);
             Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+
             String coverPath = targetLocation.toString();
             book.setCoverPath(coverPath);
             bookRepository.save(book);
+
             return coverPath;
         } catch (IOException ex) {
             throw new RuntimeException("Could not store file. Please try again!", ex);
@@ -173,10 +208,13 @@ public class BookService {
     public Resource getCoverFile(String filename) {
         try {
             Path filePath = this.coverStorageLocation.resolve(filename).normalize();
+
             if (!filePath.getParent().equals(this.coverStorageLocation)) {
                 throw new SecurityException("Cannot access file outside of current directory.");
             }
+
             Resource resource = new UrlResource(filePath.toUri());
+
             if (resource.exists() && resource.isReadable()) {
                 return resource;
             } else {
@@ -190,12 +228,14 @@ public class BookService {
     public ResponseEntity<Resource> getCoverResponse(String filename) {
         Resource file = getCoverFile(filename);
         String contentType;
+
         try {
             contentType = Files.probeContentType(file.getFile().toPath());
             if (contentType == null) contentType = "application/octet-stream";
         } catch (IOException ex) {
             contentType = "application/octet-stream";
         }
+
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(contentType))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + file.getFilename() + "\"")
@@ -206,6 +246,7 @@ public class BookService {
         if (statusStr == null || statusStr.isBlank()) {
             throw new IllegalArgumentException("Status is required");
         }
+
         try {
             return BookStatus.valueOf(statusStr.toUpperCase());
         } catch (IllegalArgumentException e) {

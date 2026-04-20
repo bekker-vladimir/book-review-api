@@ -44,7 +44,7 @@ class BookServiceTest {
     void getById_returnsDto() {
         Book book = new Book();
         BookResponseDto dto = new BookResponseDto();
-        when(bookRepository.findById(1L)).thenReturn(Optional.of(book));
+        when(bookRepository.findByIdWithAuthors(1L)).thenReturn(Optional.of(book));
         when(bookMapper.toDto(book)).thenReturn(dto);
 
         assertThat(bookService.getById(1L)).isSameAs(dto);
@@ -52,7 +52,7 @@ class BookServiceTest {
 
     @Test
     void getById_throwsWhenNotFound() {
-        when(bookRepository.findById(99L)).thenReturn(Optional.empty());
+        when(bookRepository.findByIdWithAuthors(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> bookService.getById(99L))
                 .isInstanceOf(ResourceNotFoundException.class);

@@ -50,6 +50,12 @@ public class BookController {
         return ResponseEntity.ok(bookService.getAllByStatus(BookStatus.PENDING));
     }
 
+    @GetMapping("/top-rated")
+    @Operation(summary = "Get a specified number of top-rated books (minimum 3 reviews)")
+    public ResponseEntity<List<BookResponseDto>> getTopRated(@RequestParam("count") int count) {
+        return ResponseEntity.ok(bookService.getTopRated(count));
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "Get book by id")
     public ResponseEntity<BookResponseDto> getById(@PathVariable Long id) {

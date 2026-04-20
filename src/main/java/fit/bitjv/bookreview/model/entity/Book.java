@@ -42,4 +42,10 @@ public class Book {
 
     @OneToMany(mappedBy = "book", cascade = CascadeType.REMOVE, orphanRemoval = true)
     private Set<Review> reviews;
+
+    @Column(name = "avg_rating")
+    private Double avgRating = 0.0;
+
+    @Column(name = "review_count")
+    private int reviewCount = 0;
 }

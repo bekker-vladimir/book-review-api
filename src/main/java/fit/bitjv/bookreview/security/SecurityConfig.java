@@ -38,9 +38,10 @@ public class SecurityConfig {
                         .requestMatchers("/v3/api-docs","/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/auth/login", "/auth/register").permitAll()
                         .requestMatchers("/auth/logout").authenticated()
-                        // Public book endpoints
+                        // Public endpoints
                         .requestMatchers(HttpMethod.GET, "/books", "/books/search", "/books/covers/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/books/*/reviews").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/reviews/recent").permitAll()
                         // Admin/Moderator only — must come BEFORE the wildcard GET /books/* rule
                         .requestMatchers(HttpMethod.GET, "/books/pending").hasAnyRole("ADMIN", "MODERATOR")
                         .requestMatchers(HttpMethod.GET, "/books/*").permitAll()

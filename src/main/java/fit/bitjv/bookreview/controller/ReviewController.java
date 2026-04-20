@@ -1,15 +1,14 @@
 package fit.bitjv.bookreview.controller;
 
-import fit.bitjv.bookreview.model.dto.request.ReviewRequestDto;
 import fit.bitjv.bookreview.model.dto.response.ReviewResponseDto;
 import fit.bitjv.bookreview.service.ReviewService;
 import org.springframework.security.core.Authentication;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import jakarta.validation.Valid;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/reviews")
@@ -21,15 +20,10 @@ public class ReviewController {
         this.reviewService = reviewService;
     }
 
-    @PostMapping("/book/{bookId}")
-    @Operation(summary = "Create new review by a user")
-    public ResponseEntity<ReviewResponseDto> createReview(
-            @Valid @RequestBody ReviewRequestDto reviewResponseDto,
-            @PathVariable Long bookId,
-            Authentication authentication
-    ) {
-        ReviewResponseDto saved = reviewService.createReviewForBook(reviewResponseDto, bookId, authentication.getName());
-        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    @GetMapping("/recent")
+    @Operation(summary = "Get a specified number of recent reviews")
+    public ResponseEntity<List<ReviewResponseDto>> getRecent(@RequestParam("count") int count){
+        return ResponseEntity.ok(reviewService.getRecent(count));
     }
 
     @DeleteMapping("/{reviewId}")
