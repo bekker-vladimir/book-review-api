@@ -62,6 +62,9 @@ public interface BookRepository extends JpaRepository<Book, Long> {
     @Query("SELECT b.id FROM Book b WHERE b.reviewCount >= 3 ORDER BY b.avgRating DESC LIMIT :count")
     List<Long> findTopRatedIds(@Param("count") int count);
 
+    @Query("SELECT b.id FROM Book b WHERE b.status = :status ORDER BY b.approvedAt DESC LIMIT :count")
+    List<Long> findRecentlyAddedIds(@Param("status") BookStatus status, @Param("count") int count);
+
     /**
      * Step 2: Fetch books by ID list in a single query using JOIN FETCH.
      * Without Pageable parameter - no row multiplication issues, no HHH90003004.

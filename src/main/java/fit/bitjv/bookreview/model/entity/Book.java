@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
 import java.util.Set;
 
 @Setter
@@ -28,6 +29,9 @@ public class Book {
 
     @Enumerated(EnumType.STRING)
     private BookStatus status = BookStatus.PENDING;
+
+    @Column(name = "approved_at")
+    private LocalDateTime approvedAt;
 
     @Column(name = "cover_path")
     private String coverPath;

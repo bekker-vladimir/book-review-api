@@ -20,6 +20,7 @@ public class BookResponseDto {
     private String publicationDate;
     private Double avgRating;
     private int reviewCount;
+    private String approvedAt;
     private BookStatus status;
     private String coverUrl;
     private List<AuthorResponseDto> authors;

@@ -56,6 +56,12 @@ public class BookController {
         return ResponseEntity.ok(bookService.getTopRated(count));
     }
 
+    @GetMapping("/recently-added")
+    @Operation(summary = "Get a specified number of recently-added books (have to be approved)")
+    public ResponseEntity<List<BookResponseDto>> getRecentlyAdded(@RequestParam("count") int count ){
+        return ResponseEntity.ok(bookService.getRecentlyAdded(count));
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "Get book by id")
     public ResponseEntity<BookResponseDto> getById(@PathVariable Long id) {

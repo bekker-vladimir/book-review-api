@@ -30,6 +30,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -115,6 +116,14 @@ public class BookService {
         return fetchAndOrderByIds(ids);
     }
 
+    public List<BookResponseDto> getRecentlyAdded(int count) {
+        List<Long> ids = bookRepository.findRecentlyAddedIds(BookStatus.APPROVED, count);
+        if (ids.isEmpty()){
+            return List.of();
+        }
+        return fetchAndOrderByIds(ids);
+    }
+
     @Transactional
     public Page<BookResponseDto> searchBooksPaged(String query, Pageable pageable) {
         Page<Long> idPage = bookRepository.findIdsByTitleOrAuthorAndStatus(query, BookStatus.APPROVED, pageable);
@@ -169,6 +178,11 @@ public class BookService {
     public void changeStatus(Long id, BookStatus status) {
         Book book = bookRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Book", "id", id));
+
+        if(status == BookStatus.APPROVED){
+            book.setApprovedAt(LocalDateTime.now());
+        }
+
         book.setStatus(status);
         bookRepository.save(book);
     }
