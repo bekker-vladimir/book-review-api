@@ -23,7 +23,7 @@ public class ReviewController {
     @GetMapping("/recent")
     @Operation(summary = "Get a specified number of recent reviews")
     public ResponseEntity<List<ReviewResponseDto>> getRecent(@RequestParam("count") int count){
-        return ResponseEntity.ok(reviewService.getRecent(count));
+        return ResponseEntity.ok(reviewService.getRecentReviews(count));
     }
 
     @DeleteMapping("/{reviewId}")

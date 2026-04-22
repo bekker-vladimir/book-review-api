@@ -61,12 +61,12 @@ public class ReviewService {
     }
 
     public Page<ReviewResponseDto> getReviewsByBook(Long bookId, Pageable pageable) {
-        return reviewRepository.findByBookId(bookId, pageable)
+        return reviewRepository.findByBookIdWithUserAndBook(bookId, pageable)
                 .map(reviewMapper::toDto);
     }
 
-    public List<ReviewResponseDto> getRecent(int count) {
-        return reviewRepository.getRecent(count)
+    public List<ReviewResponseDto> getRecentReviews(int count) {
+        return reviewRepository.findRecent(count)
                 .stream()
                 .map(reviewMapper::toDto)
                 .toList();

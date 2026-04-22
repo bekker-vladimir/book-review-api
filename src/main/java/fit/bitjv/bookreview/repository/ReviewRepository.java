@@ -13,7 +13,8 @@ import java.util.List;
 
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Long> {
-    Page<Review> findByBookId(Long bookId, Pageable pageable);
+    @Query("SELECT r FROM Review r JOIN FETCH r.user JOIN FETCH r.book WHERE r.book.id = :bookId")
+    Page<Review> findByBookIdWithUserAndBook(@Param("bookId") Long bookId, Pageable pageable);
 
     @Modifying
     @Query("UPDATE Book b SET " +
@@ -24,5 +25,5 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     @Query("SELECT r FROM Review r JOIN FETCH r.user JOIN FETCH r.book WHERE r.book.status = 'APPROVED' " +
             "ORDER BY r.createdAt DESC LIMIT :count")
-    List<Review> getRecent(@Param("count") int count);
+    List<Review> findRecent(@Param("count") int count);
 }
