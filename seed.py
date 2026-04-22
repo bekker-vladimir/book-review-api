@@ -13,8 +13,8 @@ BASE_URL = "http://localhost:8080"
 CREDENTIALS_FILE = "test_credentials.txt"
 SEEDED_IDS_FILE = "seeded_ids.json"  # tracks created IDs for rollback
 
-ADMIN_USERNAME = "admin"
-ADMIN_PASSWORD = "admin_password"
+ADMIN_USERNAME = "test"
+ADMIN_PASSWORD = "123456"
 
 GENRES = ['Fiction', 'Non-Fiction', 'Science Fiction', 'Fantasy', 'Mystery',
           'Romance', 'Thriller', 'Horror', 'Classic']
@@ -72,9 +72,12 @@ def generate_users(n):
             for _ in range(n):
                 username = fake.user_name() + str(random.randint(100, 9999))
                 password = fake.password()
+                email = fake.email()
                 try:
                     res = requests.post(f"{BASE_URL}/auth/register", json={
-                        "username": username, "password": password
+                        "username": username,
+                        "password": password,
+                        "email": email
                     })
                     if res.status_code == 200:
                         f.write(f"{username}:{password}\n")
@@ -290,7 +293,8 @@ def generate_reviews(users, num_reviews_per_book=3):
         console.print(f"[red]Failed to fetch books: {res.status_code}[/red]")
         return
 
-    books = res.json()
+    data = res.json()
+    books = data.get("content", [])
     if not books:
         console.print("[yellow]No approved books found.[/yellow]")
         return
