@@ -327,6 +327,36 @@ def generate_reviews(users, num_reviews_per_book=3):
 
     console.print("[bold green]Reviews done.[/bold green]")
 
+def generate_reviews_for_book(book_id, users, num_reviews=5):
+    console.print(f"[bold cyan]Generating {num_reviews} reviews for book {book_id}...[/bold cyan]")
+    if not users:
+        console.print("[red]No users available.[/red]")
+        return
+
+    reviewers = random.sample(users, min(num_reviews, len(users)))
+    ok = 0
+
+    for user in reviewers:
+        user_token = login(user["username"], user["password"])
+        if not user_token:
+            continue
+        try:
+            res = requests.post(
+                f"{BASE_URL}/books/{book_id}/reviews",
+                json={
+                    "rating": random.randint(1, 5),
+                    "comment": fake.paragraph(nb_sentences=random.randint(1, 4))
+                },
+                headers={"Authorization": f"Bearer {user_token}"}
+            )
+            if res.status_code in (200, 201):
+                ok += 1
+            else:
+                console.print(f"[red]Failed: {res.status_code} — {res.text}[/red]")
+        except Exception as e:
+            console.print(f"[red]Error: {e}[/red]")
+
+    console.print(f"[bold green]Added {ok}/{num_reviews} reviews for book {book_id}.[/bold green]")
 
 # ─── Rollback ───────────────────────────────────────────────────────────────────
 
@@ -383,13 +413,19 @@ def rollback():
 
 def main():
     parser = argparse.ArgumentParser(description="Seed / rollback test data for Book Review API")
-    parser.add_argument("--users",     type=int,            help="Number of users to generate",                default=0)
-    parser.add_argument("--books",     type=int,            help="Number of books to fetch from OpenLibrary",  default=0)
-    parser.add_argument("--approve",   action="store_true", help="Approve pending books as admin")
-    parser.add_argument("--reviews",   action="store_true", help="Generate reviews for approved books")
-    parser.add_argument("--no-covers", action="store_true", help="Skip cover download/upload when loading books")
-    parser.add_argument("--rollback",  action="store_true", help="Delete all data created by this script")
-    parser.add_argument("--all",       action="store_true", help="Full seed: users + books + approve + reviews")
+
+    general = parser.add_argument_group('general')
+    general.add_argument("--users", type=int, default=0, help="Number of users to generate")
+    general.add_argument("--books", type=int, default=0, help="Number of books to fetch from OpenLibrary")
+    general.add_argument("--approve", action="store_true", help="Approve pending books as admin")
+    general.add_argument("--reviews", action="store_true", help="Generate reviews for approved books")
+    general.add_argument("--no-covers", action="store_true", help="Skip cover download/upload when loading books")
+    general.add_argument("--rollback", action="store_true", help="Delete all data created by this script")
+    general.add_argument("--all", action="store_true", help="Full seed: users + books + approve + reviews")
+
+    book_reviews = parser.add_argument_group('book-specific reviews')
+    book_reviews.add_argument("--review-book", type=int, metavar="ID", help="Add random reviews to a specific book")
+    book_reviews.add_argument("--num-reviews", type=int, default=5, metavar="N", help="Number of reviews to add (default: 5)")
 
     args = parser.parse_args()
 
@@ -421,7 +457,12 @@ def main():
             users = get_users_from_file()
         generate_reviews(users)
 
-    if not any([args.all, args.users, args.books, args.approve, args.reviews, args.rollback]):
+    if args.review_book:
+        if not users:
+            users = get_users_from_file()
+        generate_reviews_for_book(args.review_book, users, args.num_reviews)
+
+    if not any([args.all, args.users, args.books, args.approve, args.reviews, args.review_book, args.rollback]):
         parser.print_help()
 
 
