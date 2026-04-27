@@ -14,6 +14,6 @@ import jakarta.validation.constraints.Size;
 public class ComplaintRequestDto {
 
     @NotBlank(message = "Reason cannot be blank")
-    @Size(min = 5, max = 500, message = "Reason must be between 5 and 500 characters")
+    @Size(min = 4, max = 500, message = "Reason must be between 4 and 500 characters")
     private String reason;
 }
