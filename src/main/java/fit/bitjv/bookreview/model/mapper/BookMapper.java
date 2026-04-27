@@ -6,6 +6,7 @@ import fit.bitjv.bookreview.model.entity.Book;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 
 @Component
@@ -29,7 +30,9 @@ public class BookMapper {
                 bookEntity.getPublicationDate(),
                 bookEntity.getAvgRating(),
                 bookEntity.getReviewCount(),
-                bookEntity.getApprovedAt().toString(),
+                bookEntity.getApprovedAt() != null
+                        ? bookEntity.getApprovedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd, HH:mm"))
+                        : null,
                 bookEntity.getStatus(),
                 coverUrl,
                 bookEntity.getAuthors().stream()
