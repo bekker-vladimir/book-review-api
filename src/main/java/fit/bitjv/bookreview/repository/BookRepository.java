@@ -43,13 +43,13 @@ public interface BookRepository extends JpaRepository<Book, Long> {
             countQuery = "SELECT COUNT(b) FROM Book b WHERE b.status = :status")
     Page<Long> findIdsByStatus(@Param("status") BookStatus status, Pageable pageable);
 
-    @Query(value = "SELECT DISTINCT b.id FROM Book b JOIN b.authors a WHERE " +
+    @Query(value = "SELECT b.id FROM Book b WHERE " +
             "(LOWER(b.title) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
-            "LOWER(a.fullName) LIKE LOWER(CONCAT('%', :query, '%'))) AND " +
+            "EXISTS (SELECT 1 FROM b.authors a WHERE LOWER(a.fullName) LIKE LOWER(CONCAT('%', :query, '%')))) AND " +
             "b.status = :status",
-            countQuery = "SELECT COUNT(DISTINCT b) FROM Book b JOIN b.authors a WHERE " +
+            countQuery = "SELECT COUNT(b) FROM Book b WHERE " +
                     "(LOWER(b.title) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
-                    "LOWER(a.fullName) LIKE LOWER(CONCAT('%', :query, '%'))) AND " +
+                    "EXISTS (SELECT 1 FROM b.authors a WHERE LOWER(a.fullName) LIKE LOWER(CONCAT('%', :query, '%')))) AND " +
                     "b.status = :status")
     Page<Long> findIdsByTitleOrAuthorAndStatus(@Param("query") String query,
                                                @Param("status") BookStatus status,
