@@ -9,6 +9,7 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 @Getter
@@ -43,15 +44,28 @@ public class Review {
     private User user;
 
     @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<Complaint> complaints = new HashSet<>();
+    private final Set<Complaint> complaints = new HashSet<>();
 
     @Builder
-    public Review(int rating, LocalDateTime createdAt, String comment, Book book, User user){
+    public Review(int rating, LocalDateTime createdAt, String comment, Book book, User user) {
         this.rating = rating;
         this.createdAt = createdAt;
         this.comment = comment;
         this.book = book;
         this.user = user;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Review review)) return false;
+        return Objects.equals(user, review.user) &&
+                Objects.equals(book, review.book);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(user, book);
     }
 }
 

@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.Set;
 
 @Setter
@@ -52,4 +53,17 @@ public class Book {
 
     @Column(name = "review_count")
     private int reviewCount = 0;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Book book)) return false;
+        return Objects.equals(title, book.title) &&
+                Objects.equals(publicationDate, book.publicationDate);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(title, publicationDate);
+    }
 }
