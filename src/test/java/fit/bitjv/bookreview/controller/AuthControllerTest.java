@@ -2,10 +2,7 @@ package fit.bitjv.bookreview.controller;
 
 import fit.bitjv.bookreview.model.entity.Role;
 import fit.bitjv.bookreview.model.entity.User;
-import fit.bitjv.bookreview.security.JwtBlacklistService;
-import fit.bitjv.bookreview.security.JwtFilter;
-import fit.bitjv.bookreview.security.JwtProvider;
-import fit.bitjv.bookreview.security.SecurityConfig;
+import fit.bitjv.bookreview.security.*;
 import fit.bitjv.bookreview.service.AuthService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +24,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(AuthController.class)
-@Import({SecurityConfig.class, JwtFilter.class})
+@Import({SecurityConfig.class, RequestContext.class, JwtFilter.class})
 class AuthControllerTest {
 
     @Autowired

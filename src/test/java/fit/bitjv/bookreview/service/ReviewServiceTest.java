@@ -12,6 +12,7 @@ import fit.bitjv.bookreview.model.mapper.ReviewMapper;
 import fit.bitjv.bookreview.repository.BookRepository;
 import fit.bitjv.bookreview.repository.ReviewRepository;
 import fit.bitjv.bookreview.repository.UserRepository;
+import fit.bitjv.bookreview.security.RequestContext;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -27,12 +28,19 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class ReviewServiceTest {
 
-    @Mock ReviewRepository reviewRepository;
-    @Mock BookRepository bookRepository;
-    @Mock UserRepository userRepository;
-    @Mock ReviewMapper reviewMapper;
+    @Mock
+    ReviewRepository reviewRepository;
+    @Mock
+    BookRepository bookRepository;
+    @Mock
+    UserRepository userRepository;
+    @Mock
+    ReviewMapper reviewMapper;
+    @Mock
+    RequestContext requestContext;
 
-    @InjectMocks ReviewService reviewService;
+    @InjectMocks
+    ReviewService reviewService;
 
     // createReview
 
@@ -44,31 +52,34 @@ class ReviewServiceTest {
         dto.setRating(5);
         dto.setComment("Great!");
 
+        when(requestContext.getUsername()).thenReturn("alice");
         when(userRepository.findByUsername("alice")).thenReturn(Optional.of(user));
         when(bookRepository.findById(1L)).thenReturn(Optional.of(book));
         Review saved = Review.builder().rating(5).comment("Great!").user(user).book(book).build();
         when(reviewRepository.save(any())).thenReturn(saved);
         when(reviewMapper.toDto(saved)).thenReturn(new ReviewResponseDto());
 
-        reviewService.createReviewForBook(dto, 1L, "alice");
+        reviewService.createReviewForBook(dto, 1L);
 
         verify(reviewRepository).save(any(Review.class));
     }
 
     @Test
     void createReview_throwsWhenUserNotFound() {
+        when(requestContext.getUsername()).thenReturn("ghost");
         when(userRepository.findByUsername("ghost")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> reviewService.createReviewForBook(new ReviewRequestDto(), 1L, "ghost"))
+        assertThatThrownBy(() -> reviewService.createReviewForBook(new ReviewRequestDto(), 1L))
                 .isInstanceOf(UnauthorizedAccessException.class);
     }
 
     @Test
     void createReview_throwsWhenBookNotFound() {
+        when(requestContext.getUsername()).thenReturn("alice");
         when(userRepository.findByUsername("alice")).thenReturn(Optional.of(buildUser("alice", Role.USER)));
         when(bookRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> reviewService.createReviewForBook(new ReviewRequestDto(), 99L, "alice"))
+        assertThatThrownBy(() -> reviewService.createReviewForBook(new ReviewRequestDto(), 99L))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 

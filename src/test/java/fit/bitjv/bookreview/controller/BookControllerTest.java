@@ -3,10 +3,7 @@ package fit.bitjv.bookreview.controller;
 import fit.bitjv.bookreview.exception.ResourceNotFoundException;
 import fit.bitjv.bookreview.model.dto.response.BookResponseDto;
 import fit.bitjv.bookreview.model.entity.BookStatus;
-import fit.bitjv.bookreview.security.JwtBlacklistService;
-import fit.bitjv.bookreview.security.JwtFilter;
-import fit.bitjv.bookreview.security.JwtProvider;
-import fit.bitjv.bookreview.security.SecurityConfig;
+import fit.bitjv.bookreview.security.*;
 import fit.bitjv.bookreview.service.AuthService;
 import fit.bitjv.bookreview.service.BookService;
 import fit.bitjv.bookreview.service.ReviewService;
@@ -30,7 +27,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(BookController.class)
-@Import({SecurityConfig.class, JwtFilter.class})
+@Import({SecurityConfig.class, RequestContext.class, JwtFilter.class})
 class BookControllerTest {
 
     @Autowired

@@ -12,6 +12,7 @@ import fit.bitjv.bookreview.model.mapper.ComplaintMapper;
 import fit.bitjv.bookreview.repository.ComplaintRepository;
 import fit.bitjv.bookreview.repository.ReviewRepository;
 import fit.bitjv.bookreview.repository.UserRepository;
+import fit.bitjv.bookreview.security.RequestContext;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -27,12 +28,19 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class ComplaintServiceTest {
 
-    @Mock ComplaintRepository complaintRepository;
-    @Mock UserRepository userRepository;
-    @Mock ReviewRepository reviewRepository;
-    @Mock ComplaintMapper complaintMapper;
+    @Mock
+    ComplaintRepository complaintRepository;
+    @Mock
+    UserRepository userRepository;
+    @Mock
+    ReviewRepository reviewRepository;
+    @Mock
+    ComplaintMapper complaintMapper;
+    @Mock
+    RequestContext requestContext;
 
-    @InjectMocks ComplaintService complaintService;
+    @InjectMocks
+    ComplaintService complaintService;
 
     // createComplaint
 
@@ -44,13 +52,14 @@ class ComplaintServiceTest {
         dto.setReason("Spam");
 
         when(reviewRepository.findById(1L)).thenReturn(Optional.of(review));
+        when(requestContext.getUsername()).thenReturn("alice");
         when(userRepository.findByUsername("alice")).thenReturn(Optional.of(user));
         when(complaintRepository.existsByReviewAndUser(review, user)).thenReturn(false);
         Complaint saved = new Complaint("Spam", user, review);
         when(complaintRepository.save(any())).thenReturn(saved);
         when(complaintMapper.toDto(saved)).thenReturn(null);
 
-        complaintService.createComplaintForReview(dto, 1L, "alice");
+        complaintService.createComplaintForReview(dto, 1L);
 
         verify(complaintRepository).save(any(Complaint.class));
     }
@@ -61,11 +70,12 @@ class ComplaintServiceTest {
         Review review = buildReview(1L);
 
         when(reviewRepository.findById(1L)).thenReturn(Optional.of(review));
+        when(requestContext.getUsername()).thenReturn("alice");
         when(userRepository.findByUsername("alice")).thenReturn(Optional.of(user));
         when(complaintRepository.existsByReviewAndUser(review, user)).thenReturn(true);
 
         assertThatThrownBy(() ->
-                complaintService.createComplaintForReview(new ComplaintRequestDto(), 1L, "alice"))
+                complaintService.createComplaintForReview(new ComplaintRequestDto(), 1L))
                 .isInstanceOf(ResourceAlreadyExistsException.class);
     }
 
@@ -74,17 +84,18 @@ class ComplaintServiceTest {
         when(reviewRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() ->
-                complaintService.createComplaintForReview(new ComplaintRequestDto(), 99L, "alice"))
+                complaintService.createComplaintForReview(new ComplaintRequestDto(), 99L))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
     @Test
     void createComplaint_throwsWhenUserNotFound() {
         when(reviewRepository.findById(1L)).thenReturn(Optional.of(buildReview(1L)));
+        when(requestContext.getUsername()).thenReturn("ghost");
         when(userRepository.findByUsername("ghost")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() ->
-                complaintService.createComplaintForReview(new ComplaintRequestDto(), 1L, "ghost"))
+                complaintService.createComplaintForReview(new ComplaintRequestDto(), 1L))
                 .isInstanceOf(UnauthorizedAccessException.class);
     }
 
