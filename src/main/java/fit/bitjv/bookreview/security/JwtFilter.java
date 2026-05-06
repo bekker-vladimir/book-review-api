@@ -18,11 +18,13 @@ public class JwtFilter extends OncePerRequestFilter {
     private final JwtProvider jwtProvider;
     private final AuthService authService;
     private final JwtBlacklistService jwtBlacklistService;
+    private final RequestContext requestContext;
 
-    public JwtFilter(JwtProvider jwtProvider, AuthService authService, JwtBlacklistService jwtBlacklistService) {
+    public JwtFilter(JwtProvider jwtProvider, AuthService authService, JwtBlacklistService jwtBlacklistService, RequestContext requestContext) {
         this.jwtProvider = jwtProvider;
         this.authService = authService;
         this.jwtBlacklistService = jwtBlacklistService;
+        this.requestContext = requestContext;
     }
 
     @Override
@@ -37,13 +39,13 @@ public class JwtFilter extends OncePerRequestFilter {
             }
 
             String username = jwtProvider.getUsernameFromToken(token);
-
             UserDetails userDetails = authService.loadUserByUsername(username);
+
+            requestContext.setUsername(username);
 
             UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
                     userDetails, null, userDetails.getAuthorities()
             );
-
             SecurityContextHolder.getContext().setAuthentication(auth);
         }
 

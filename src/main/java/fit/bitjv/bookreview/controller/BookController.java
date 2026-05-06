@@ -94,10 +94,9 @@ public class BookController {
     @Operation(summary = "Create new review by a user")
     public ResponseEntity<ReviewResponseDto> createReviewForBook(
             @Valid @RequestBody ReviewRequestDto reviewRequestDto,
-            @PathVariable Long bookId,
-            Authentication authentication
+            @PathVariable Long bookId
     ) {
-        ReviewResponseDto saved = reviewService.createReviewForBook(reviewRequestDto, bookId, authentication.getName());
+        ReviewResponseDto saved = reviewService.createReviewForBook(reviewRequestDto, bookId);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 

@@ -12,6 +12,7 @@ import fit.bitjv.bookreview.model.mapper.ComplaintMapper;
 import fit.bitjv.bookreview.repository.ComplaintRepository;
 import fit.bitjv.bookreview.repository.ReviewRepository;
 import fit.bitjv.bookreview.repository.UserRepository;
+import fit.bitjv.bookreview.security.RequestContext;
 import jakarta.transaction.Transactional;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -26,20 +27,26 @@ public class ComplaintService {
     private final UserRepository userRepository;
     private final ReviewRepository reviewRepository;
     private final ComplaintMapper complaintMapper;
+    private final RequestContext requestContext;
 
-    public ComplaintService(ComplaintRepository complaintRepository, UserRepository userRepository, ReviewRepository reviewRepository, ComplaintMapper complaintMapper) {
+    public ComplaintService(ComplaintRepository complaintRepository,
+                            UserRepository userRepository,
+                            ReviewRepository reviewRepository,
+                            ComplaintMapper complaintMapper,
+                            RequestContext requestContext) {
         this.complaintRepository = complaintRepository;
         this.userRepository = userRepository;
         this.reviewRepository = reviewRepository;
         this.complaintMapper = complaintMapper;
+        this.requestContext = requestContext;
     }
 
     @Transactional
-    public ComplaintResponseDto createComplaintForReview(ComplaintRequestDto complaintDto, Long reviewId, String authenticatedUsername) {
+    public ComplaintResponseDto createComplaintForReview(ComplaintRequestDto complaintDto, Long reviewId) {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new ResourceNotFoundException("Review", "id", reviewId));
 
-        User user = userRepository.findByUsername(authenticatedUsername)
+        User user = userRepository.findByUsername(requestContext.getUsername())
                 .orElseThrow(() -> new UnauthorizedAccessException("Session expired"));
 
         boolean hasComplained = complaintRepository.existsByReviewAndUser(review, user);

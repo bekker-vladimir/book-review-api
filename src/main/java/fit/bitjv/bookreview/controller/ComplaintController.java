@@ -25,11 +25,10 @@ public class ComplaintController {
     @Operation(summary = "Create new complaint for a review")
     public ResponseEntity<ComplaintResponseDto> createComplaintForReview(
             @Valid @RequestBody ComplaintRequestDto complaintRequestDto,
-            @PathVariable Long reviewId,
-            Authentication authentication
+            @PathVariable Long reviewId
     ) {
         ComplaintResponseDto complaint = complaintService.createComplaintForReview(
-                complaintRequestDto, reviewId, authentication.getName()
+                complaintRequestDto, reviewId
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(complaint);
     }

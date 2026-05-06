@@ -12,6 +12,8 @@ import fit.bitjv.bookreview.model.entity.User;
 import fit.bitjv.bookreview.repository.BookRepository;
 import fit.bitjv.bookreview.repository.ReviewRepository;
 import fit.bitjv.bookreview.repository.UserRepository;
+import fit.bitjv.bookreview.security.RequestContext;
+import io.lettuce.core.RedisCredentials;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,22 +27,25 @@ public class ReviewService {
     private final BookRepository bookRepository;
     private final UserRepository userRepository;
     private final ReviewMapper reviewMapper;
+    private final RequestContext requestContext;
 
     public ReviewService(
             ReviewRepository reviewRepository,
             BookRepository bookRepository,
             UserRepository userRepository,
-            ReviewMapper reviewMapper
+            ReviewMapper reviewMapper,
+            RequestContext requestContext
     ) {
         this.reviewRepository = reviewRepository;
         this.bookRepository = bookRepository;
         this.userRepository = userRepository;
         this.reviewMapper = reviewMapper;
+        this.requestContext = requestContext;
     }
 
     @Transactional
-    public ReviewResponseDto createReviewForBook(ReviewRequestDto reviewRequestDto, Long bookId, String authenticatedUsername) {
-        User user = userRepository.findByUsername(authenticatedUsername)
+    public ReviewResponseDto createReviewForBook(ReviewRequestDto reviewRequestDto, Long bookId) {
+        User user = userRepository.findByUsername(requestContext.getUsername())
                 .orElseThrow(() -> new UnauthorizedAccessException("Session expired"));
 
         Book book = bookRepository.findById(bookId)
